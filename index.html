@@ -1,668 +1,705 @@
-import React, { useState, useRef } from 'react';
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>mekaSKON Digital</title>
+    
+    <!-- Memuatkan Tailwind CSS untuk reka bentuk (Styling) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Memuatkan React & ReactDOM -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    
+    <!-- Memuatkan Babel untuk menterjemah kod JSX (React) di dalam pelayar web -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-// --- KOMPONEN BENTUK VISUAL & DEFINISI ---
+    <style>
+        body { margin: 0; overflow: hidden; font-family: sans-serif; }
+        /* Membuang scrollbar default untuk rupa yang lebih kemas */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
 
-const SVGDefs = () => (
-  <svg width="0" height="0" className="absolute pointer-events-none">
-    <defs>
-      <linearGradient id="orangeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-        <stop offset="0%" style={{ stopColor: '#FF9F43', stopOpacity: 1 }} />
-        <stop offset="100%" style={{ stopColor: '#E67E22', stopOpacity: 1 }} />
-      </linearGradient>
-      <filter id="shadow">
-        <feDropShadow dx="1" dy="2" stdDeviation="2" floodOpacity="0.2"/>
-      </filter>
-    </defs>
-  </svg>
-);
+    <script type="text/babel">
+        const { useState, useRef } = React;
 
-// Kepingan Unit Oren Tunggal
-const UnitPiece = ({ x, y, id, onDragStart }) => (
-  <div 
-    draggable="true"
-    onDragStart={(e) => { e.stopPropagation(); onDragStart(e, 'moveUnit', id); }}
-    style={{ position: 'absolute', left: x, top: y, zIndex: 30 }}
-    className="cursor-grab active:cursor-grabbing hover:scale-105 transition-transform"
-  >
-    <svg width="36" height="36" className="pointer-events-none drop-shadow-md">
-      <rect x="0" y="0" width="36" height="36" rx="4" fill="url(#orangeGrad)" stroke="#D35400" strokeWidth="2" />
-    </svg>
-  </div>
-);
+        // --- KOMPONEN BENTUK VISUAL & DEFINISI ---
 
-// Kepingan Simbol Tambah (+)
-const PlusSymbol = ({ x, y, id, isSnapped, onDragStart }) => (
-  <div 
-    draggable="true"
-    onDragStart={(e) => { e.stopPropagation(); onDragStart(e, 'moveSymbol', id); }}
-    style={{ position: 'absolute', left: x, top: y, zIndex: 25 }}
-    className="cursor-grab active:cursor-grabbing hover:scale-105 transition-transform"
-  >
-    <svg width="45" height="85" className="drop-shadow-lg pointer-events-none overflow-visible">
-      <path 
-        d="M 0 0 H 30 A 10 10 0 0 1 40 10 V 70 A 10 10 0 0 1 30 80 H 0 V 42 Q 0 38 4 38 H 22 Q 26 38 26 34 V 18 Q 26 14 22 14 H 4 Q 0 14 0 10 Z" 
-        fill="url(#orangeGrad)" stroke="#D35400" strokeWidth="2"
-      />
-      <text x="20" y="60" fill="white" fontSize="28" fontWeight="bold" textAnchor="middle" dominantBaseline="central">+</text>
-    </svg>
-  </div>
-);
+        const SVGDefs = () => (
+          <svg width="0" height="0" className="absolute pointer-events-none">
+            <defs>
+              <linearGradient id="orangeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" style={{ stopColor: '#FF9F43', stopOpacity: 1 }} />
+                <stop offset="100%" style={{ stopColor: '#E67E22', stopOpacity: 1 }} />
+              </linearGradient>
+              <filter id="shadow">
+                <feDropShadow dx="1" dy="2" stdDeviation="2" floodOpacity="0.2"/>
+              </filter>
+            </defs>
+          </svg>
+        );
 
-// Kepingan Simbol Tolak (-)
-const MinusSymbol = ({ x, y, id, isSnapped, onDragStart }) => (
-  <div 
-    draggable="true"
-    onDragStart={(e) => { e.stopPropagation(); onDragStart(e, 'moveSymbol', id); }}
-    style={{ position: 'absolute', left: x, top: y, zIndex: 25 }}
-    className="cursor-grab active:cursor-grabbing hover:scale-105 transition-transform"
-  >
-    <svg width="50" height="42" className="drop-shadow-lg pointer-events-none overflow-visible">
-      <g transform="translate(10, 0)">
-          {!isSnapped && (
-            <>
-              <rect x="-10" y="6" width="12" height="8" rx="2" fill="#E67E22" stroke="#D35400" strokeWidth="1.5" />
-              <rect x="-10" y="22" width="12" height="8" rx="2" fill="#E67E22" stroke="#D35400" strokeWidth="1.5" />
-            </>
-          )}
-          <rect x="0" y="0" width="36" height="40" rx="4" fill="url(#orangeGrad)" stroke="#D35400" strokeWidth="2" />
-          <rect x="8" y="18" width="20" height="4" rx="2" fill="white" />
-      </g>
-    </svg>
-  </div>
-);
+        // Kepingan Unit Oren Tunggal
+        const UnitPiece = ({ x, y, id, onDragStart }) => (
+          <div 
+            draggable="true"
+            onDragStart={(e) => { e.stopPropagation(); onDragStart(e, 'moveUnit', id); }}
+            style={{ position: 'absolute', left: x, top: y, zIndex: 30 }}
+            className="cursor-grab active:cursor-grabbing hover:scale-105 transition-transform"
+          >
+            <svg width="36" height="36" className="pointer-events-none drop-shadow-md">
+              <rect x="0" y="0" width="36" height="36" rx="4" fill="url(#orangeGrad)" stroke="#D35400" strokeWidth="2" />
+            </svg>
+          </div>
+        );
 
-// Komponen Bar 
-const BarBase = ({ id, x, y, capacity, onDragStart, onEmpty, onFill }) => {
-  const slotSize = 40;
-  const width = slotSize + 10;
-  const bodyHeight = capacity * slotSize;
+        // Kepingan Simbol Tambah (+)
+        const PlusSymbol = ({ x, y, id, isSnapped, onDragStart }) => (
+          <div 
+            draggable="true"
+            onDragStart={(e) => { e.stopPropagation(); onDragStart(e, 'moveSymbol', id); }}
+            style={{ position: 'absolute', left: x, top: y, zIndex: 25 }}
+            className="cursor-grab active:cursor-grabbing hover:scale-105 transition-transform"
+          >
+            <svg width="45" height="85" className="drop-shadow-lg pointer-events-none overflow-visible">
+              <path 
+                d="M 0 0 H 30 A 10 10 0 0 1 40 10 V 70 A 10 10 0 0 1 30 80 H 0 V 42 Q 0 38 4 38 H 22 Q 26 38 26 34 V 18 Q 26 14 22 14 H 4 Q 0 14 0 10 Z" 
+                fill="url(#orangeGrad)" stroke="#D35400" strokeWidth="2"
+              />
+              <text x="20" y="60" fill="white" fontSize="28" fontWeight="bold" textAnchor="middle" dominantBaseline="central">+</text>
+            </svg>
+          </div>
+        );
 
-  return (
-    <div 
-      draggable="true"
-      onDragStart={(e) => { e.stopPropagation(); onDragStart(e, 'moveBar', id); }}
-      style={{ position: 'absolute', left: x, top: y, zIndex: 10 }}
-      className="cursor-grab active:cursor-grabbing group"
-    >
-        <svg width={width + 30} height={bodyHeight + 30} className="pointer-events-none overflow-visible">
-            <path d={`M 15 0 L 15 10 L 35 10 L 35 0 Z`} fill="#F8FAFC" stroke="#A0AEC0" strokeWidth="2" strokeDasharray="2,2"/>
-            <rect x="0" y="10" width={width} height={bodyHeight} rx="4" fill="white" stroke="#A0AEC0" strokeWidth="2" filter="url(#shadow)"/>
-            <path d={`M 15 ${bodyHeight + 10} L 15 ${bodyHeight + 20} L 35 ${bodyHeight + 20} L 35 ${bodyHeight + 10} Z`} fill="white" stroke="#A0AEC0" strokeWidth="2" />
+        // Kepingan Simbol Tolak (-)
+        const MinusSymbol = ({ x, y, id, isSnapped, onDragStart }) => (
+          <div 
+            draggable="true"
+            onDragStart={(e) => { e.stopPropagation(); onDragStart(e, 'moveSymbol', id); }}
+            style={{ position: 'absolute', left: x, top: y, zIndex: 25 }}
+            className="cursor-grab active:cursor-grabbing hover:scale-105 transition-transform"
+          >
+            <svg width="50" height="42" className="drop-shadow-lg pointer-events-none overflow-visible">
+              <g transform="translate(10, 0)">
+                  {!isSnapped && (
+                    <>
+                      <rect x="-10" y="6" width="12" height="8" rx="2" fill="#E67E22" stroke="#D35400" strokeWidth="1.5" />
+                      <rect x="-10" y="22" width="12" height="8" rx="2" fill="#E67E22" stroke="#D35400" strokeWidth="1.5" />
+                    </>
+                  )}
+                  <rect x="0" y="0" width="36" height="40" rx="4" fill="url(#orangeGrad)" stroke="#D35400" strokeWidth="2" />
+                  <rect x="8" y="18" width="20" height="4" rx="2" fill="white" />
+              </g>
+            </svg>
+          </div>
+        );
+
+        // Komponen Bar 
+        const BarBase = ({ id, x, y, capacity, onDragStart, onEmpty, onFill }) => {
+          const slotSize = 40;
+          const width = slotSize + 10;
+          const bodyHeight = capacity * slotSize;
+
+          return (
+            <div 
+              draggable="true"
+              onDragStart={(e) => { e.stopPropagation(); onDragStart(e, 'moveBar', id); }}
+              style={{ position: 'absolute', left: x, top: y, zIndex: 10 }}
+              className="cursor-grab active:cursor-grabbing group"
+            >
+                <svg width={width + 30} height={bodyHeight + 30} className="pointer-events-none overflow-visible">
+                    <path d={`M 15 0 L 15 10 L 35 10 L 35 0 Z`} fill="#F8FAFC" stroke="#A0AEC0" strokeWidth="2" strokeDasharray="2,2"/>
+                    <rect x="0" y="10" width={width} height={bodyHeight} rx="4" fill="white" stroke="#A0AEC0" strokeWidth="2" filter="url(#shadow)"/>
+                    <path d={`M 15 ${bodyHeight + 10} L 15 ${bodyHeight + 20} L 35 ${bodyHeight + 20} L 35 ${bodyHeight + 10} Z`} fill="white" stroke="#A0AEC0" strokeWidth="2" />
+                    
+                    <g transform={`translate(${width - 2}, 15)`}>
+                        <path d="M 0 0 L 22 0 L 22 22 L 0 22 Z" fill="white" stroke="#A0AEC0" strokeWidth="2" />
+                        <text x="11" y="16" fontFamily="sans-serif" fontSize="14" fontWeight="bold" fill="#4A5568" textAnchor="middle">{capacity}</text>
+                    </g>
+
+                    {Array.from({ length: capacity }).map((_, i) => (
+                        <g key={i}>
+                            <rect x={7} y={12 + i * slotSize} width={slotSize - 4} height={slotSize - 4} rx="4" fill="#F7FAFC" stroke="#E2E8F0" strokeWidth="2" />
+                        </g>
+                    ))}
+                </svg>
+
+                <div className="absolute -right-12 top-4 hidden group-hover:flex flex-col gap-2 z-50">
+                    <button onMouseDown={(e) => { e.stopPropagation(); onFill(id); }} className="bg-green-500 hover:bg-green-600 text-white rounded-full w-9 h-9 flex items-center justify-center shadow-lg font-bold text-xl" title="Isi Penuh">+</button>
+                    <button onMouseDown={(e) => { e.stopPropagation(); onEmpty(id); }} className="bg-red-500 hover:bg-red-600 text-white rounded-full w-9 h-9 flex items-center justify-center shadow-lg font-bold text-xl" title="Kosongkan">−</button>
+                </div>
+            </div>
+          );
+        };
+
+
+        // --- KOMPONEN UTAMA (APP) ---
+        function App() {
+          const [elements, setElements] = useState({ bars: [], units: [], symbols: [] });
+          const [mathEq, setMathEq] = useState({ num1: '', op: '', num2: '', ans: '' });
+          const [nextId, setNextId] = useState(1);
+          const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+          const workspaceRef = useRef(null);
+
+          // --- LOGIK SEMAKAN AYAT MATEMATIK (AUTO-CHECK) ---
+          const handleMathEqChange = (field, value) => {
+            setMathEq(prev => ({ ...prev, [field]: value }));
+          };
+
+          const getAnswerStatus = () => {
+            const { num1, op, num2, ans } = mathEq;
+            if (ans === '') return 'neutral';
             
-            <g transform={`translate(${width - 2}, 15)`}>
-                <path d="M 0 0 L 22 0 L 22 22 L 0 22 Z" fill="white" stroke="#A0AEC0" strokeWidth="2" />
-                <text x="11" y="16" fontFamily="sans-serif" fontSize="14" fontWeight="bold" fill="#4A5568" textAnchor="middle">{capacity}</text>
-            </g>
+            const n1 = parseInt(num1);
+            const n2 = parseInt(num2);
+            const a = parseInt(ans);
+            
+            if (isNaN(n1) || isNaN(n2) || !op || isNaN(a)) return 'neutral';
+            
+            let expected;
+            if (op === '+') expected = n1 + n2;
+            else if (op === '-') expected = n1 - n2;
+            else return 'neutral';
 
-            {Array.from({ length: capacity }).map((_, i) => (
-                <g key={i}>
-                    <rect x={7} y={12 + i * slotSize} width={slotSize - 4} height={slotSize - 4} rx="4" fill="#F7FAFC" stroke="#E2E8F0" strokeWidth="2" />
-                </g>
-            ))}
-        </svg>
+            return expected === a ? 'correct' : 'incorrect';
+          };
 
-        <div className="absolute -right-12 top-4 hidden group-hover:flex flex-col gap-2 z-50">
-            <button onMouseDown={(e) => { e.stopPropagation(); onFill(id); }} className="bg-green-500 hover:bg-green-600 text-white rounded-full w-9 h-9 flex items-center justify-center shadow-lg font-bold text-xl" title="Isi Penuh">+</button>
-            <button onMouseDown={(e) => { e.stopPropagation(); onEmpty(id); }} className="bg-red-500 hover:bg-red-600 text-white rounded-full w-9 h-9 flex items-center justify-center shadow-lg font-bold text-xl" title="Kosongkan">−</button>
-        </div>
-    </div>
-  );
-};
-
-
-// --- KOMPONEN UTAMA (APP) ---
-export default function App() {
-  const [elements, setElements] = useState({ bars: [], units: [], symbols: [] });
-  const [mathEq, setMathEq] = useState({ num1: '', op: '', num2: '', ans: '' });
-  const [nextId, setNextId] = useState(1);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const workspaceRef = useRef(null);
-
-  // --- LOGIK SEMAKAN AYAT MATEMATIK (AUTO-CHECK) ---
-  const handleMathEqChange = (field, value) => {
-    setMathEq(prev => ({ ...prev, [field]: value }));
-  };
-
-  const getAnswerStatus = () => {
-    const { num1, op, num2, ans } = mathEq;
-    if (ans === '') return 'neutral';
-    
-    const n1 = parseInt(num1);
-    const n2 = parseInt(num2);
-    const a = parseInt(ans);
-    
-    if (isNaN(n1) || isNaN(n2) || !op || isNaN(a)) return 'neutral';
-    
-    let expected;
-    if (op === '+') expected = n1 + n2;
-    else if (op === '-') expected = n1 - n2;
-    else return 'neutral';
-
-    return expected === a ? 'correct' : 'incorrect';
-  };
-
-  const ansStatus = getAnswerStatus();
-  let ansBgClass = "bg-white border-gray-200 focus:border-blue-400";
-  if (ansStatus === 'correct') {
-      ansBgClass = "bg-green-100 border-green-500 text-green-700 shadow-[0_0_20px_rgba(34,197,94,0.4)]";
-  } else if (ansStatus === 'incorrect') {
-      ansBgClass = "bg-red-100 border-red-500 text-red-700 shadow-[0_0_20px_rgba(239,68,68,0.4)]";
-  }
-
-
-  // --- LOGIK KOORDINAT DINAMIK ---
-  const getUnitPos = (unit, bars) => {
-      if (unit.barId !== null) {
-          const bar = bars.find(b => b.id === unit.barId);
-          if (bar) return { x: bar.x + 7, y: bar.y + 12 + (unit.slotIndex * 40) };
-      }
-      return { x: unit.x, y: unit.y };
-  };
-
-  const getSymbolPos = (sym, bars) => {
-      if (sym.attachedBarId !== null) {
-          const bar = bars.find(b => b.id === sym.attachedBarId);
-          if (bar) {
-              if (sym.type === '+') {
-                  return { x: bar.x + 48, y: bar.y + 1 };
-              } else if (sym.type === '-') {
-                  return { x: bar.x + 40, y: bar.y + 12 + sym.attachedSlotIndex * 40 }; 
-              }
+          const ansStatus = getAnswerStatus();
+          let ansBgClass = "bg-white border-gray-200 focus:border-blue-400";
+          if (ansStatus === 'correct') {
+              ansBgClass = "bg-green-100 border-green-500 text-green-700 shadow-[0_0_20px_rgba(34,197,94,0.4)]";
+          } else if (ansStatus === 'incorrect') {
+              ansBgClass = "bg-red-100 border-red-500 text-red-700 shadow-[0_0_20px_rgba(239,68,68,0.4)]";
           }
-      }
-      return { x: sym.x, y: sym.y };
-  };
 
-  const getParent = (bar, allBars) => {
-      return allBars.find(p => Math.abs(p.x - bar.x) < 5 && Math.abs((p.y + p.capacity * 40 + 10) - bar.y) < 5);
-  };
 
-  const getChainBelow = (barId, allBars) => {
-    const bar = allBars.find(b => b.id === barId);
-    if (!bar) return [];
-    const expectedChildY = bar.y + (bar.capacity * 40) + 10;
-    const child = allBars.find(b => Math.abs(b.x - bar.x) < 5 && Math.abs(b.y - expectedChildY) < 5);
-    if (child) return [child, ...getChainBelow(child.id, allBars)];
-    return [];
-  };
+          // --- LOGIK KOORDINAT DINAMIK ---
+          const getUnitPos = (unit, bars) => {
+              if (unit.barId !== null) {
+                  const bar = bars.find(b => b.id === unit.barId);
+                  if (bar) return { x: bar.x + 7, y: bar.y + 12 + (unit.slotIndex * 40) };
+              }
+              return { x: unit.x, y: unit.y };
+          };
 
-  const getVerticalIndicators = () => {
-      const roots = elements.bars.filter(b => !getParent(b, elements.bars));
-      return roots.map(rootBar => {
-          const verticalChain = [rootBar, ...getChainBelow(rootBar.id, elements.bars)];
-          const chainBarIds = verticalChain.map(b => b.id);
-          const totalFilledUnits = elements.units.filter(u => chainBarIds.includes(u.barId)).length;
-          return { id: rootBar.id, x: rootBar.x, y: rootBar.y, totalFilledUnits };
-      });
-  };
+          const getSymbolPos = (sym, bars) => {
+              if (sym.attachedBarId !== null) {
+                  const bar = bars.find(b => b.id === sym.attachedBarId);
+                  if (bar) {
+                      if (sym.type === '+') {
+                          return { x: bar.x + 48, y: bar.y + 1 };
+                      } else if (sym.type === '-') {
+                          return { x: bar.x + 40, y: bar.y + 12 + sym.attachedSlotIndex * 40 }; 
+                      }
+                  }
+              }
+              return { x: sym.x, y: sym.y };
+          };
 
-  const getCluster = (startBarId, allBars, allSymbols) => {
-      const visitedBars = new Set();
-      const queue = [startBarId];
+          const getParent = (bar, allBars) => {
+              return allBars.find(p => Math.abs(p.x - bar.x) < 5 && Math.abs((p.y + p.capacity * 40 + 10) - bar.y) < 5);
+          };
 
-      while (queue.length > 0) {
-          const curId = queue.shift();
-          if (visitedBars.has(curId)) continue;
-          visitedBars.add(curId);
+          const getChainBelow = (barId, allBars) => {
+            const bar = allBars.find(b => b.id === barId);
+            if (!bar) return [];
+            const expectedChildY = bar.y + (bar.capacity * 40) + 10;
+            const child = allBars.find(b => Math.abs(b.x - bar.x) < 5 && Math.abs(b.y - expectedChildY) < 5);
+            if (child) return [child, ...getChainBelow(child.id, allBars)];
+            return [];
+          };
 
-          const curBar = allBars.find(b => b.id === curId);
-          if (!curBar) continue;
+          const getVerticalIndicators = () => {
+              const roots = elements.bars.filter(b => !getParent(b, elements.bars));
+              return roots.map(rootBar => {
+                  const verticalChain = [rootBar, ...getChainBelow(rootBar.id, elements.bars)];
+                  const chainBarIds = verticalChain.map(b => b.id);
+                  const totalFilledUnits = elements.units.filter(u => chainBarIds.includes(u.barId)).length;
+                  return { id: rootBar.id, x: rootBar.x, y: rootBar.y, totalFilledUnits };
+              });
+          };
 
-          allBars.forEach(b => {
-              if (visitedBars.has(b.id)) return;
-              if (Math.abs(b.x - curBar.x) < 5 && Math.abs(b.y - (curBar.y + curBar.capacity * 40 + 10)) < 5) queue.push(b.id);
-              if (Math.abs(curBar.x - b.x) < 5 && Math.abs(curBar.y - (b.y + b.capacity * 40 + 10)) < 5) queue.push(b.id);
-          });
+          const getCluster = (startBarId, allBars, allSymbols) => {
+              const visitedBars = new Set();
+              const queue = [startBarId];
 
-          const attachedMinus = allSymbols.filter(s => s.type === '-' && s.attachedBarId === curId);
-          attachedMinus.forEach(sym => {
-              const symPos = getSymbolPos(sym, allBars);
-              allBars.forEach(b => {
-                  if (visitedBars.has(b.id)) return;
-                  if (Math.abs(b.x - (symPos.x + 46)) < 15 && Math.abs(b.y - (symPos.y - 12)) < 15) {
-                      queue.push(b.id);
+              while (queue.length > 0) {
+                  const curId = queue.shift();
+                  if (visitedBars.has(curId)) continue;
+                  visitedBars.add(curId);
+
+                  const curBar = allBars.find(b => b.id === curId);
+                  if (!curBar) continue;
+
+                  allBars.forEach(b => {
+                      if (visitedBars.has(b.id)) return;
+                      if (Math.abs(b.x - curBar.x) < 5 && Math.abs(b.y - (curBar.y + curBar.capacity * 40 + 10)) < 5) queue.push(b.id);
+                      if (Math.abs(curBar.x - b.x) < 5 && Math.abs(curBar.y - (b.y + b.capacity * 40 + 10)) < 5) queue.push(b.id);
+                  });
+
+                  const attachedMinus = allSymbols.filter(s => s.type === '-' && s.attachedBarId === curId);
+                  attachedMinus.forEach(sym => {
+                      const symPos = getSymbolPos(sym, allBars);
+                      allBars.forEach(b => {
+                          if (visitedBars.has(b.id)) return;
+                          if (Math.abs(b.x - (symPos.x + 46)) < 15 && Math.abs(b.y - (symPos.y - 12)) < 15) {
+                              queue.push(b.id);
+                          }
+                      });
+                  });
+
+                  allSymbols.forEach(sym => {
+                      if (sym.type === '-' && sym.attachedBarId !== null) {
+                          const symPos = getSymbolPos(sym, allBars);
+                          if (Math.abs(curBar.x - (symPos.x + 46)) < 15 && Math.abs(curBar.y - (symPos.y - 12)) < 15) {
+                              queue.push(sym.attachedBarId); 
+                          }
+                      }
+                  });
+              }
+              return Array.from(visitedBars);
+          };
+
+
+          // --- LOGIK LEKATAN (SNAP) ---
+          const checkSymbolSnap = (dropX, dropY, symType, bars) => {
+              let finalX = dropX, finalY = dropY;
+              let snappedBarId = null, snappedSlotIndex = null;
+
+              if (symType === '-') {
+                  bars.forEach(bar => {
+                      if (snappedBarId) return;
+                      for (let i = 0; i < bar.capacity; i++) {
+                          const snapX = bar.x + 40;
+                          const snapY = bar.y + 12 + i * 40;
+                          if (Math.hypot(dropX - snapX, dropY - snapY) < 40) {
+                              finalX = snapX; finalY = snapY;
+                              snappedBarId = bar.id; snappedSlotIndex = i;
+                          }
+                      }
+                  });
+              } else if (symType === '+') {
+                  bars.forEach(bar => {
+                      if (snappedBarId) return;
+                      const snapX = bar.x + 48;
+                      const snapY = bar.y + 1;
+                      if (Math.hypot(dropX - snapX, dropY - snapY) < 40) {
+                          finalX = snapX; finalY = snapY;
+                          snappedBarId = bar.id;
+                      }
+                  });
+              }
+              return { finalX, finalY, snappedBarId, snappedSlotIndex };
+          };
+
+          const checkUnitSnap = (dropX, dropY, ignoreUnitId = null) => {
+              let snappedBarId = null, snappedSlotIndex = null;
+              let finalX = dropX, finalY = dropY;
+              let minDistance = 40; 
+
+              elements.bars.forEach(bar => {
+                  for (let i = 0; i < bar.capacity; i++) {
+                      if (!elements.units.some(u => u.id !== ignoreUnitId && u.barId === bar.id && u.slotIndex === i)) {
+                          const slotX = bar.x + 7;
+                          const slotY = bar.y + 12 + i * 40;
+                          if (Math.hypot(dropX - slotX, dropY - slotY) < minDistance) {
+                              minDistance = Math.hypot(dropX - slotX, dropY - slotY);
+                              snappedBarId = bar.id; snappedSlotIndex = i;
+                              finalX = 0; finalY = 0;
+                          }
+                      }
                   }
               });
-          });
-
-          allSymbols.forEach(sym => {
-              if (sym.type === '-' && sym.attachedBarId !== null) {
-                  const symPos = getSymbolPos(sym, allBars);
-                  if (Math.abs(curBar.x - (symPos.x + 46)) < 15 && Math.abs(curBar.y - (symPos.y - 12)) < 15) {
-                      queue.push(sym.attachedBarId); 
-                  }
-              }
-          });
-      }
-      return Array.from(visitedBars);
-  };
+              return { snappedBarId, snappedSlotIndex, finalX, finalY };
+          };
 
 
-  // --- LOGIK LEKATAN (SNAP) ---
-  const checkSymbolSnap = (dropX, dropY, symType, bars) => {
-      let finalX = dropX, finalY = dropY;
-      let snappedBarId = null, snappedSlotIndex = null;
+          // --- LOGIK DRAG & DROP ---
+          const handleDragStart = (e, type, payload) => {
+            e.dataTransfer.setData("dragType", type);
+            e.dataTransfer.setData("payload", payload);
+            const rect = e.target.getBoundingClientRect();
+            setDragOffset({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+          };
 
-      if (symType === '-') {
-          bars.forEach(bar => {
-              if (snappedBarId) return;
-              for (let i = 0; i < bar.capacity; i++) {
-                  const snapX = bar.x + 40;
-                  const snapY = bar.y + 12 + i * 40;
-                  if (Math.hypot(dropX - snapX, dropY - snapY) < 40) {
-                      finalX = snapX; finalY = snapY;
-                      snappedBarId = bar.id; snappedSlotIndex = i;
-                  }
-              }
-          });
-      } else if (symType === '+') {
-          bars.forEach(bar => {
-              if (snappedBarId) return;
-              const snapX = bar.x + 48;
-              const snapY = bar.y + 1;
-              if (Math.hypot(dropX - snapX, dropY - snapY) < 40) {
-                  finalX = snapX; finalY = snapY;
-                  snappedBarId = bar.id;
-              }
-          });
-      }
-      return { finalX, finalY, snappedBarId, snappedSlotIndex };
-  };
+          const handleDrop = (e) => {
+            e.preventDefault();
+            const type = e.dataTransfer.getData("dragType");
+            const payload = e.dataTransfer.getData("payload");
+            
+            const canvasRect = e.currentTarget.getBoundingClientRect();
+            const dropX = e.clientX - canvasRect.left - dragOffset.x;
+            const dropY = e.clientY - canvasRect.top - dragOffset.y;
 
-  const checkUnitSnap = (dropX, dropY, ignoreUnitId = null) => {
-      let snappedBarId = null, snappedSlotIndex = null;
-      let finalX = dropX, finalY = dropY;
-      let minDistance = 40; 
+            if (type === 'newBar') {
+                const capacity = parseInt(payload, 10);
+                const newBarId = nextId;
+                const safeX = Math.max(40, dropX);
+                const safeY = Math.max(40, dropY); 
 
-      elements.bars.forEach(bar => {
-          for (let i = 0; i < bar.capacity; i++) {
-              if (!elements.units.some(u => u.id !== ignoreUnitId && u.barId === bar.id && u.slotIndex === i)) {
-                  const slotX = bar.x + 7;
-                  const slotY = bar.y + 12 + i * 40;
-                  if (Math.hypot(dropX - slotX, dropY - slotY) < minDistance) {
-                      minDistance = Math.hypot(dropX - slotX, dropY - slotY);
-                      snappedBarId = bar.id; snappedSlotIndex = i;
-                      finalX = 0; finalY = 0;
-                  }
-              }
-          }
-      });
-      return { snappedBarId, snappedSlotIndex, finalX, finalY };
-  };
-
-
-  // --- LOGIK DRAG & DROP ---
-  const handleDragStart = (e, type, payload) => {
-    e.dataTransfer.setData("dragType", type);
-    e.dataTransfer.setData("payload", payload);
-    const rect = e.target.getBoundingClientRect();
-    setDragOffset({ x: e.clientX - rect.left, y: e.clientY - rect.top });
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    const type = e.dataTransfer.getData("dragType");
-    const payload = e.dataTransfer.getData("payload");
-    
-    const canvasRect = e.currentTarget.getBoundingClientRect();
-    const dropX = e.clientX - canvasRect.left - dragOffset.x;
-    const dropY = e.clientY - canvasRect.top - dragOffset.y;
-
-    if (type === 'newBar') {
-        const capacity = parseInt(payload, 10);
-        const newBarId = nextId;
-        const safeX = Math.max(40, dropX);
-        const safeY = Math.max(40, dropY); // Lebih natural dalam canvas
-
-        setElements(prev => ({
-            ...prev,
-            bars: [...prev.bars, { id: newBarId, x: safeX, y: safeY, capacity }]
-        }));
-        setNextId(nextId + 1);
-    } 
-    else if (type === 'newUnit') {
-        const { snappedBarId, snappedSlotIndex, finalX, finalY } = checkUnitSnap(dropX, dropY);
-        setElements(prev => ({
-            ...prev,
-            units: [...prev.units, { id: nextId, barId: snappedBarId, slotIndex: snappedSlotIndex, x: finalX, y: finalY }]
-        }));
-        setNextId(nextId + 1);
-    }
-    else if (type === 'newSymbol') {
-        const { finalX, finalY, snappedBarId, snappedSlotIndex } = checkSymbolSnap(dropX, dropY, payload, elements.bars);
-        setElements(prev => ({
-            ...prev,
-            symbols: [...prev.symbols, { 
-                id: nextId, type: payload, x: finalX, y: finalY, 
-                attachedBarId: snappedBarId, attachedSlotIndex: snappedSlotIndex 
-            }]
-        }));
-        setNextId(nextId + 1);
-    }
-    else if (type === 'moveUnit') {
-        const unitId = parseInt(payload);
-        const { snappedBarId, snappedSlotIndex, finalX, finalY } = checkUnitSnap(dropX, dropY, unitId);
-        
-        setElements(prev => ({
-            ...prev,
-            units: prev.units.map(u => u.id === unitId ? {
-                ...u, barId: snappedBarId, slotIndex: snappedSlotIndex, x: finalX, y: finalY
-            } : u)
-        }));
-    }
-    else if (type === 'moveSymbol') {
-        const symbolId = parseInt(payload);
-        const symbolToMove = elements.symbols.find(s => s.id === symbolId);
-        if(!symbolToMove) return;
-
-        const { finalX, finalY, snappedBarId, snappedSlotIndex } = checkSymbolSnap(dropX, dropY, symbolToMove.type, elements.bars);
-
-        setElements(prev => ({
-            ...prev,
-            symbols: prev.symbols.map(s => s.id === symbolId ? { 
-                ...s, 
-                x: snappedBarId ? s.x : finalX,
-                y: snappedBarId ? s.y : finalY,
-                attachedBarId: snappedBarId,
-                attachedSlotIndex: snappedSlotIndex
-            } : s)
-        }));
-    }
-    else if (type === 'moveBar') {
-        const draggedId = parseInt(payload, 10);
-        const clusterIds = getCluster(draggedId, elements.bars, elements.symbols);
-        let newX = dropX, newY = dropY;
-        let snapped = false;
-
-        elements.symbols.forEach(sym => {
-            if (snapped) return;
-            if (sym.type === '-' && sym.attachedBarId !== null && !clusterIds.includes(sym.attachedBarId)) {
-                const symPos = getSymbolPos(sym, elements.bars);
-                const targetX = symPos.x + 46; 
-                const targetY = symPos.y - 12; 
-                if (Math.hypot(newX - targetX, newY - targetY) < 40) {
-                    newX = targetX; newY = targetY; snapped = true;
-                }
+                setElements(prev => ({
+                    ...prev,
+                    bars: [...prev.bars, { id: newBarId, x: safeX, y: safeY, capacity }]
+                }));
+                setNextId(nextId + 1);
+            } 
+            else if (type === 'newUnit') {
+                const { snappedBarId, snappedSlotIndex, finalX, finalY } = checkUnitSnap(dropX, dropY);
+                setElements(prev => ({
+                    ...prev,
+                    units: [...prev.units, { id: nextId, barId: snappedBarId, slotIndex: snappedSlotIndex, x: finalX, y: finalY }]
+                }));
+                setNextId(nextId + 1);
             }
-        });
+            else if (type === 'newSymbol') {
+                const { finalX, finalY, snappedBarId, snappedSlotIndex } = checkSymbolSnap(dropX, dropY, payload, elements.bars);
+                setElements(prev => ({
+                    ...prev,
+                    symbols: [...prev.symbols, { 
+                        id: nextId, type: payload, x: finalX, y: finalY, 
+                        attachedBarId: snappedBarId, attachedSlotIndex: snappedSlotIndex 
+                    }]
+                }));
+                setNextId(nextId + 1);
+            }
+            else if (type === 'moveUnit') {
+                const unitId = parseInt(payload);
+                const { snappedBarId, snappedSlotIndex, finalX, finalY } = checkUnitSnap(dropX, dropY, unitId);
+                
+                setElements(prev => ({
+                    ...prev,
+                    units: prev.units.map(u => u.id === unitId ? {
+                        ...u, barId: snappedBarId, slotIndex: snappedSlotIndex, x: finalX, y: finalY
+                    } : u)
+                }));
+            }
+            else if (type === 'moveSymbol') {
+                const symbolId = parseInt(payload);
+                const symbolToMove = elements.symbols.find(s => s.id === symbolId);
+                if(!symbolToMove) return;
 
-        if (!snapped) {
-            elements.bars.forEach(target => {
-                if (snapped || clusterIds.includes(target.id)) return;
-                const expectedSnapY = target.y + (target.capacity * 40) + 10; 
-                if (Math.abs(newX - target.x) < 30 && Math.abs(newY - expectedSnapY) < 30) {
-                    newX = target.x; newY = expectedSnapY; snapped = true;
+                const { finalX, finalY, snappedBarId, snappedSlotIndex } = checkSymbolSnap(dropX, dropY, symbolToMove.type, elements.bars);
+
+                setElements(prev => ({
+                    ...prev,
+                    symbols: prev.symbols.map(s => s.id === symbolId ? { 
+                        ...s, 
+                        x: snappedBarId ? s.x : finalX,
+                        y: snappedBarId ? s.y : finalY,
+                        attachedBarId: snappedBarId,
+                        attachedSlotIndex: snappedSlotIndex
+                    } : s)
+                }));
+            }
+            else if (type === 'moveBar') {
+                const draggedId = parseInt(payload, 10);
+                const clusterIds = getCluster(draggedId, elements.bars, elements.symbols);
+                let newX = dropX, newY = dropY;
+                let snapped = false;
+
+                elements.symbols.forEach(sym => {
+                    if (snapped) return;
+                    if (sym.type === '-' && sym.attachedBarId !== null && !clusterIds.includes(sym.attachedBarId)) {
+                        const symPos = getSymbolPos(sym, elements.bars);
+                        const targetX = symPos.x + 46; 
+                        const targetY = symPos.y - 12; 
+                        if (Math.hypot(newX - targetX, newY - targetY) < 40) {
+                            newX = targetX; newY = targetY; snapped = true;
+                        }
+                    }
+                });
+
+                if (!snapped) {
+                    elements.bars.forEach(target => {
+                        if (snapped || clusterIds.includes(target.id)) return;
+                        const expectedSnapY = target.y + (target.capacity * 40) + 10; 
+                        if (Math.abs(newX - target.x) < 30 && Math.abs(newY - expectedSnapY) < 30) {
+                            newX = target.x; newY = expectedSnapY; snapped = true;
+                        }
+                    });
                 }
+
+                const draggedBar = elements.bars.find(b => b.id === draggedId);
+                const dx = newX - draggedBar.x, dy = newY - draggedBar.y;
+
+                setElements(prev => ({
+                    ...prev,
+                    bars: prev.bars.map(b => clusterIds.includes(b.id) ? { ...b, x: b.x + dx, y: b.y + dy } : b)
+                }));
+            }
+          };
+
+          // --- LOGIK UNTUK TONG SAMPAH ---
+          const handleTrashDrop = (e) => {
+            e.preventDefault();
+            e.stopPropagation(); 
+            
+            const type = e.dataTransfer.getData("dragType");
+            const payload = e.dataTransfer.getData("payload");
+
+            if (type === 'moveUnit') {
+                setElements(prev => ({ ...prev, units: prev.units.filter(u => u.id !== parseInt(payload)) }));
+            } 
+            else if (type === 'moveSymbol') {
+                setElements(prev => ({ ...prev, symbols: prev.symbols.filter(s => s.id !== parseInt(payload)) }));
+            } 
+            else if (type === 'moveBar') {
+                const clusterIds = getCluster(parseInt(payload), elements.bars, elements.symbols);
+                setElements(prev => ({
+                    ...prev,
+                    bars: prev.bars.filter(b => !clusterIds.includes(b.id)),
+                    units: prev.units.filter(u => !clusterIds.includes(u.barId)),
+                    symbols: prev.symbols.filter(s => !clusterIds.includes(s.attachedBarId)) 
+                }));
+            }
+          };
+
+          const handleEmptyBar = (barId) => {
+            const bar = elements.bars.find(b => b.id === barId);
+            if (!bar) return;
+            setElements(prev => {
+                const unitsToScatter = prev.units.filter(u => u.barId === barId);
+                const scatteredUnits = unitsToScatter.map((u, index) => ({
+                    ...u, barId: null, slotIndex: null,
+                    x: bar.x + 80 + (Math.floor(index / 5) * 45), 
+                    y: bar.y + (index % 5) * 45
+                }));
+                return { ...prev, units: [...prev.units.filter(u => u.barId !== barId), ...scatteredUnits] };
             });
+          };
+
+          const handleFillBar = (barId) => {
+            const bar = elements.bars.find(b => b.id === barId);
+            if (!bar) return;
+            const occupied = elements.units.filter(u => u.barId === barId).map(u => u.slotIndex);
+            let newUnits = [], tempId = nextId;
+            for (let i = 0; i < bar.capacity; i++) {
+                if (!occupied.includes(i)) newUnits.push({ id: tempId++, barId: barId, slotIndex: i, x: 0, y: 0 });
+            }
+            if(newUnits.length > 0) {
+                setNextId(tempId);
+                setElements(prev => ({ ...prev, units: [...prev.units, ...newUnits] }));
+            }
+          };
+
+          const resetScroll = () => {
+              if(workspaceRef.current) {
+                  workspaceRef.current.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+              }
+          };
+
+          return (
+            <div className="flex flex-col h-screen bg-gray-50 font-sans overflow-hidden select-none">
+              <SVGDefs />
+              
+              {/* HEADER DENGAN TAJUK BAHARU */}
+              <header className="bg-orange-500 text-white p-4 shadow-md flex justify-between items-center z-20">
+                <div>
+                    <h1 className="text-2xl font-bold tracking-wider">mekaSKON</h1>
+                    <p className="text-sm opacity-90">mekanisme Set Kepingan Operasi Nombor</p>
+                </div>
+                <div className="flex gap-2">
+                    <button onClick={resetScroll} className="bg-orange-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-orange-700 transition-colors shadow-sm">
+                        📌 Ke Penjuru Meja
+                    </button>
+                    <button 
+                        onClick={() => { 
+                            setElements({bars:[], units:[], symbols:[]}); 
+                            setMathEq({ num1: '', op: '', num2: '', ans: '' });
+                            setNextId(1); 
+                            resetScroll(); 
+                        }} 
+                        className="bg-white text-orange-600 px-5 py-2 rounded-lg font-semibold hover:bg-orange-100 transition-colors shadow-sm"
+                    >
+                         Kosongkan Meja
+                    </button>
+                </div>
+              </header>
+
+              <div className="flex flex-1 overflow-hidden relative">
+                {/* SIDEBAR */}
+                <aside className="w-80 bg-white shadow-[4px_0_15px_rgba(0,0,0,0.05)] z-20 flex flex-col h-full border-r border-gray-200 shrink-0">
+                  <div className="p-4 border-b border-gray-100 bg-gray-50">
+                    <h2 className="text-lg font-bold text-gray-800">Stok Alat</h2>
+                  </div>
+                  
+                  <div className="flex-1 overflow-y-auto p-4 space-y-6">
+                    <div>
+                        <h3 className="text-sm font-bold text-gray-400 mb-3 uppercase tracking-wider">Komponen Asas</h3>
+                        <div className="flex items-center gap-4 bg-orange-50 p-3 rounded-xl border border-orange-100 justify-around">
+                            
+                            <div draggable="true" onDragStart={(e) => handleDragStart(e, 'newUnit', null)} className="cursor-grab p-2 hover:bg-white rounded-lg transition-colors flex flex-col items-center">
+                                <svg width="36" height="36" className="pointer-events-none drop-shadow-sm">
+                                    <rect x="0" y="0" width="36" height="36" rx="4" fill="url(#orangeGrad)" stroke="#D35400" strokeWidth="2" />
+                                </svg>
+                            </div>
+
+                            <div draggable="true" onDragStart={(e) => handleDragStart(e, 'newSymbol', '+')} className="cursor-grab p-2 hover:bg-white rounded-lg transition-colors flex flex-col items-center">
+                                <svg width="45" height="85" className="pointer-events-none drop-shadow-sm transform scale-75 origin-top">
+                                    <path d="M 0 0 H 30 A 10 10 0 0 1 40 10 V 70 A 10 10 0 0 1 30 80 H 0 V 42 Q 0 38 4 38 H 22 Q 26 38 26 34 V 18 Q 26 14 22 14 H 4 Q 0 14 0 10 Z" fill="url(#orangeGrad)" stroke="#D35400" strokeWidth="2" />
+                                    <text x="20" y="60" fill="white" fontSize="28" fontWeight="bold" textAnchor="middle" dominantBaseline="central">+</text>
+                                </svg>
+                            </div>
+
+                            <div draggable="true" onDragStart={(e) => handleDragStart(e, 'newSymbol', '-')} className="cursor-grab p-2 hover:bg-white rounded-lg transition-colors flex flex-col items-center">
+                                <svg width="50" height="42" className="pointer-events-none drop-shadow-sm transform scale-90">
+                                    <g transform="translate(10, 0)">
+                                        <rect x="-10" y="6" width="12" height="8" rx="2" fill="#E67E22" stroke="#D35400" strokeWidth="1.5" />
+                                        <rect x="-10" y="22" width="12" height="8" rx="2" fill="#E67E22" stroke="#D35400" strokeWidth="1.5" />
+                                        <rect x="0" y="0" width="36" height="40" rx="4" fill="url(#orangeGrad)" stroke="#D35400" strokeWidth="2" />
+                                        <rect x="8" y="18" width="20" height="4" rx="2" fill="white" />
+                                    </g>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 className="text-sm font-bold text-gray-400 mb-3 uppercase tracking-wider">Bar Nombor (Kosong)</h3>
+                        <div className="grid grid-cols-2 gap-3">
+                        {[10, 9, 8, 7, 6, 5, 4, 3, 2, 1].map(size => (
+                            <div key={size} draggable="true" onDragStart={(e) => handleDragStart(e, 'newBar', size)} className="cursor-grab p-2 hover:bg-slate-50 border border-transparent hover:border-slate-300 rounded-lg flex flex-col items-center transition-colors">
+                                <div className="h-24 w-12 bg-white rounded border border-gray-300 flex items-center justify-center shadow-inner relative overflow-hidden">
+                                    <span className="text-2xl font-black text-gray-300 absolute z-0">{size}</span>
+                                </div>
+                                <span className="text-xs font-bold text-gray-600 mt-1">Bar {size}</span>
+                            </div>
+                        ))}
+                        </div>
+                    </div>
+                  </div>
+                </aside>
+
+                {/* BAHAGIAN KANAN: AYAT MATEMATIK & MEJA KERJA */}
+                <div className="flex-1 relative flex flex-col overflow-hidden bg-slate-200">
+                    
+                    {/* PANEL AYAT MATEMATIK PINTAR (Di luar kanvas, tidak akan tertutup) */}
+                    <div className="bg-white/95 backdrop-blur border-b border-gray-200 py-4 px-6 flex justify-center z-20 shadow-sm shrink-0">
+                        <div className="flex items-center gap-3">
+                            <span className="font-extrabold text-gray-600 text-lg mr-3 uppercase tracking-widest hidden md:inline">Ayat Matematik</span>
+                            
+                            <input type="number" placeholder="12"
+                              className="w-20 h-20 text-center text-4xl font-black text-gray-800 border-4 border-gray-200 rounded-2xl focus:outline-none focus:border-blue-400 focus:bg-blue-50 transition-colors shadow-inner placeholder:text-gray-200" 
+                              value={mathEq.num1} onChange={e => handleMathEqChange('num1', e.target.value)} 
+                            />
+                            
+                            <input type="text" maxLength="1" placeholder="+"
+                              className="w-16 h-20 text-center text-5xl font-black text-gray-800 border-4 border-gray-200 rounded-2xl focus:outline-none focus:border-blue-400 focus:bg-blue-50 transition-colors shadow-inner placeholder:text-gray-200" 
+                              value={mathEq.op} 
+                              onChange={e => {
+                                  const val = e.target.value;
+                                  if (val === '+' || val === '-' || val === '') handleMathEqChange('op', val);
+                              }} 
+                            />
+                            
+                            <input type="number" placeholder="6"
+                              className="w-20 h-20 text-center text-4xl font-black text-gray-800 border-4 border-gray-200 rounded-2xl focus:outline-none focus:border-blue-400 focus:bg-blue-50 transition-colors shadow-inner placeholder:text-gray-200" 
+                              value={mathEq.num2} onChange={e => handleMathEqChange('num2', e.target.value)} 
+                            />
+                            
+                            <span className="text-5xl font-black text-gray-400 mx-2">=</span>
+                            
+                            <input type="number" placeholder="?"
+                              className={`w-24 h-20 text-center text-4xl font-black border-4 rounded-2xl focus:outline-none transition-all duration-300 shadow-inner placeholder:text-gray-200 ${ansBgClass}`} 
+                              value={mathEq.ans} onChange={e => handleMathEqChange('ans', e.target.value)} 
+                            />
+                        </div>
+                    </div>
+
+                    {/* MEJA KERJA BOLEH SKROL */}
+                    <main 
+                        ref={workspaceRef}
+                        className="flex-1 overflow-auto relative" 
+                        id="scroll-area"
+                    >
+                        <div 
+                            className="w-[3000px] h-[3000px] relative bg-slate-100"
+                            onDragOver={(e) => e.preventDefault()}
+                            onDrop={handleDrop}
+                            style={{
+                                backgroundImage: 'radial-gradient(#CBD5E0 2px, transparent 2px)',
+                                backgroundSize: '40px 40px'
+                            }}
+                        >
+                            {/* Panduan Penggunaan Asal apabila meja kosong */}
+                            {elements.bars.length === 0 && elements.units.length === 0 && elements.symbols.length === 0 && (
+                                <div className="absolute top-10 left-10 pointer-events-none bg-white/70 p-6 rounded-2xl border border-dashed border-gray-300 shadow-sm max-w-lg backdrop-blur-sm">
+                                    <p className="text-gray-700 font-bold text-xl mb-3 border-b pb-2">Panduan Penggunaan</p>
+                                    <ul className="text-gray-600 text-sm space-y-3 list-disc list-inside">
+                                      <li>Tarik <b>Bar</b> dan <b>Kepingan Oren</b> dari Stok Alat di kiri ke atas meja.</li>
+                                      <li>Lalukan tetikus (hover) pada mana-mana bar di meja untuk melihat butang <b>(+) Isi Penuh</b> atau <b>(-) Kosongkan</b> unit.</li>
+                                      <li>Tarik operasi <b>Tolak ➖</b> ke sebelah KANAN bar pertama. Gigi akan masuk tersembunyi.</li>
+                                      <li>Tarik <b>Bar Kedua</b> ke sebelah KANAN operasi tolak tadi. Mereka akan bersambung.</li>
+                                      <li>Tarik operasi <b>Tambah ➕</b> ke sebelah KANAN bar. Lekuknya akan membalut nombor.</li>
+                                    </ul>
+                                </div>
+                            )}
+
+                            {/* Render Indikator Nombor */}
+                            {getVerticalIndicators().map(indicator => (
+                                <div
+                                    key={`indicator-${indicator.id}`}
+                                    style={{ position: 'absolute', left: indicator.x - 4, top: indicator.y - 45, zIndex: 40 }}
+                                    className="bg-blue-600 text-white font-black text-2xl w-14 h-12 rounded-t-xl rounded-bl-md rounded-br-md shadow-lg pointer-events-none flex items-center justify-center border-b-4 border-blue-800"
+                                >
+                                    {indicator.totalFilledUnits}
+                                </div>
+                            ))}
+
+                            {/* Render Elemen Bar */}
+                            {elements.bars.map(bar => <BarBase key={`bar-${bar.id}`} {...bar} onDragStart={handleDragStart} onEmpty={handleEmptyBar} onFill={handleFillBar} />)}
+                            
+                            {/* Render Simbol */}
+                            {elements.symbols.map(sym => {
+                                const pos = getSymbolPos(sym, elements.bars);
+                                const isSnapped = sym.attachedBarId !== null;
+                                return sym.type === '+' 
+                                    ? <PlusSymbol key={`sym-${sym.id}`} id={sym.id} x={pos.x} y={pos.y} isSnapped={isSnapped} onDragStart={handleDragStart} />
+                                    : <MinusSymbol key={`sym-${sym.id}`} id={sym.id} x={pos.x} y={pos.y} isSnapped={isSnapped} onDragStart={handleDragStart} />;
+                            })}
+
+                            {/* Render Kepingan Unit Oren */}
+                            {elements.units.map(unit => {
+                                const pos = getUnitPos(unit, elements.bars);
+                                return <UnitPiece key={`unit-${unit.id}`} id={unit.id} x={pos.x} y={pos.y} onDragStart={handleDragStart} />;
+                            })}
+                        </div>
+                    </main>
+                    
+                    {/* Tong Sampah (Fixed position on right) */}
+                    <div 
+                        onDragOver={(e) => e.preventDefault()}
+                        onDrop={handleTrashDrop}
+                        className="absolute bottom-16 right-8 w-48 h-32 bg-red-50 border-4 border-red-300 border-dashed rounded-2xl flex flex-col items-center justify-center text-red-500 z-50 shadow-lg hover:bg-red-200 transition-colors cursor-pointer"
+                        title="Lepaskan elemen di sini untuk membuang"
+                    >
+                        <span className="text-3xl mb-1 pointer-events-none">🗑️</span>
+                        <span className="font-bold text-xs tracking-wide uppercase pointer-events-none">Kawasan Buang</span>
+                    </div>
+
+                    {/* WATERMARK & KREDIT BAWAH (Kekal / Fixed) */}
+                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-50 pointer-events-none">
+                        <p className="bg-white/80 backdrop-blur-md px-6 py-2 rounded-full text-xs font-bold text-gray-500 tracking-wider shadow-sm border border-gray-200">
+                            DIJANA OLEH AI. HAK MILIK DAN IDEA ASAL MEKATOON.
+                        </p>
+                    </div>
+                    
+                </div>
+              </div>
+            </div>
+          );
         }
 
-        const draggedBar = elements.bars.find(b => b.id === draggedId);
-        const dx = newX - draggedBar.x, dy = newY - draggedBar.y;
-
-        setElements(prev => ({
-            ...prev,
-            bars: prev.bars.map(b => clusterIds.includes(b.id) ? { ...b, x: b.x + dx, y: b.y + dy } : b)
-        }));
-    }
-  };
-
-  // --- LOGIK UNTUK TONG SAMPAH ---
-  const handleTrashDrop = (e) => {
-    e.preventDefault();
-    e.stopPropagation(); 
-    
-    const type = e.dataTransfer.getData("dragType");
-    const payload = e.dataTransfer.getData("payload");
-
-    if (type === 'moveUnit') {
-        setElements(prev => ({ ...prev, units: prev.units.filter(u => u.id !== parseInt(payload)) }));
-    } 
-    else if (type === 'moveSymbol') {
-        setElements(prev => ({ ...prev, symbols: prev.symbols.filter(s => s.id !== parseInt(payload)) }));
-    } 
-    else if (type === 'moveBar') {
-        const clusterIds = getCluster(parseInt(payload), elements.bars, elements.symbols);
-        setElements(prev => ({
-            ...prev,
-            bars: prev.bars.filter(b => !clusterIds.includes(b.id)),
-            units: prev.units.filter(u => !clusterIds.includes(u.barId)),
-            symbols: prev.symbols.filter(s => !clusterIds.includes(s.attachedBarId)) 
-        }));
-    }
-  };
-
-  const handleEmptyBar = (barId) => {
-    const bar = elements.bars.find(b => b.id === barId);
-    if (!bar) return;
-    setElements(prev => {
-        const unitsToScatter = prev.units.filter(u => u.barId === barId);
-        const scatteredUnits = unitsToScatter.map((u, index) => ({
-            ...u, barId: null, slotIndex: null,
-            x: bar.x + 80 + (Math.floor(index / 5) * 45), 
-            y: bar.y + (index % 5) * 45
-        }));
-        return { ...prev, units: [...prev.units.filter(u => u.barId !== barId), ...scatteredUnits] };
-    });
-  };
-
-  const handleFillBar = (barId) => {
-    const bar = elements.bars.find(b => b.id === barId);
-    if (!bar) return;
-    const occupied = elements.units.filter(u => u.barId === barId).map(u => u.slotIndex);
-    let newUnits = [], tempId = nextId;
-    for (let i = 0; i < bar.capacity; i++) {
-        if (!occupied.includes(i)) newUnits.push({ id: tempId++, barId: barId, slotIndex: i, x: 0, y: 0 });
-    }
-    if(newUnits.length > 0) {
-        setNextId(tempId);
-        setElements(prev => ({ ...prev, units: [...prev.units, ...newUnits] }));
-    }
-  };
-
-  const resetScroll = () => {
-      if(workspaceRef.current) {
-          workspaceRef.current.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
-      }
-  };
-
-  return (
-    <div className="flex flex-col h-screen bg-gray-50 font-sans overflow-hidden select-none">
-      <SVGDefs />
-      
-      {/* HEADER DENGAN TAJUK BAHARU */}
-      <header className="bg-orange-500 text-white p-4 shadow-md flex justify-between items-center z-20">
-        <div>
-            <h1 className="text-2xl font-bold tracking-wider">mekaSKON</h1>
-            <p className="text-sm opacity-90">mekanisme Set Kepingan Operasi Nombor</p>
-        </div>
-        <div className="flex gap-2">
-            <button onClick={resetScroll} className="bg-orange-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-orange-700 transition-colors shadow-sm">
-                📌 Ke Penjuru Meja
-            </button>
-            <button 
-                onClick={() => { 
-                    setElements({bars:[], units:[], symbols:[]}); 
-                    setMathEq({ num1: '', op: '', num2: '', ans: '' });
-                    setNextId(1); 
-                    resetScroll(); 
-                }} 
-                className="bg-white text-orange-600 px-5 py-2 rounded-lg font-semibold hover:bg-orange-100 transition-colors shadow-sm"
-            >
-                 Kosongkan Meja
-            </button>
-        </div>
-      </header>
-
-      <div className="flex flex-1 overflow-hidden relative">
-        {/* SIDEBAR */}
-        <aside className="w-80 bg-white shadow-[4px_0_15px_rgba(0,0,0,0.05)] z-20 flex flex-col h-full border-r border-gray-200 shrink-0">
-          <div className="p-4 border-b border-gray-100 bg-gray-50">
-            <h2 className="text-lg font-bold text-gray-800">Stok Alat</h2>
-          </div>
-          
-          <div className="flex-1 overflow-y-auto p-4 space-y-6">
-            <div>
-                <h3 className="text-sm font-bold text-gray-400 mb-3 uppercase tracking-wider">Komponen Asas</h3>
-                <div className="flex items-center gap-4 bg-orange-50 p-3 rounded-xl border border-orange-100 justify-around">
-                    
-                    <div draggable onDragStart={(e) => handleDragStart(e, 'newUnit', null)} className="cursor-grab p-2 hover:bg-white rounded-lg transition-colors flex flex-col items-center">
-                        <svg width="36" height="36" className="pointer-events-none drop-shadow-sm">
-                            <rect x="0" y="0" width="36" height="36" rx="4" fill="url(#orangeGrad)" stroke="#D35400" strokeWidth="2" />
-                        </svg>
-                    </div>
-
-                    <div draggable onDragStart={(e) => handleDragStart(e, 'newSymbol', '+')} className="cursor-grab p-2 hover:bg-white rounded-lg transition-colors flex flex-col items-center">
-                        <svg width="45" height="85" className="pointer-events-none drop-shadow-sm transform scale-75 origin-top">
-                            <path d="M 0 0 H 30 A 10 10 0 0 1 40 10 V 70 A 10 10 0 0 1 30 80 H 0 V 42 Q 0 38 4 38 H 22 Q 26 38 26 34 V 18 Q 26 14 22 14 H 4 Q 0 14 0 10 Z" fill="url(#orangeGrad)" stroke="#D35400" strokeWidth="2" />
-                            <text x="20" y="60" fill="white" fontSize="28" fontWeight="bold" textAnchor="middle" dominantBaseline="central">+</text>
-                        </svg>
-                    </div>
-
-                    <div draggable onDragStart={(e) => handleDragStart(e, 'newSymbol', '-')} className="cursor-grab p-2 hover:bg-white rounded-lg transition-colors flex flex-col items-center">
-                        <svg width="50" height="42" className="pointer-events-none drop-shadow-sm transform scale-90">
-                            <g transform="translate(10, 0)">
-                                <rect x="-10" y="6" width="12" height="8" rx="2" fill="#E67E22" stroke="#D35400" strokeWidth="1.5" />
-                                <rect x="-10" y="22" width="12" height="8" rx="2" fill="#E67E22" stroke="#D35400" strokeWidth="1.5" />
-                                <rect x="0" y="0" width="36" height="40" rx="4" fill="url(#orangeGrad)" stroke="#D35400" strokeWidth="2" />
-                                <rect x="8" y="18" width="20" height="4" rx="2" fill="white" />
-                            </g>
-                        </svg>
-                    </div>
-                </div>
-            </div>
-
-            <div>
-                <h3 className="text-sm font-bold text-gray-400 mb-3 uppercase tracking-wider">Bar Nombor (Kosong)</h3>
-                <div className="grid grid-cols-2 gap-3">
-                {[10, 9, 8, 7, 6, 5, 4, 3, 2, 1].map(size => (
-                    <div key={size} draggable onDragStart={(e) => handleDragStart(e, 'newBar', size)} className="cursor-grab p-2 hover:bg-slate-50 border border-transparent hover:border-slate-300 rounded-lg flex flex-col items-center transition-colors">
-                        <div className="h-24 w-12 bg-white rounded border border-gray-300 flex items-center justify-center shadow-inner relative overflow-hidden">
-                            <span className="text-2xl font-black text-gray-300 absolute z-0">{size}</span>
-                        </div>
-                        <span className="text-xs font-bold text-gray-600 mt-1">Bar {size}</span>
-                    </div>
-                ))}
-                </div>
-            </div>
-          </div>
-        </aside>
-
-        {/* BAHAGIAN KANAN: AYAT MATEMATIK & MEJA KERJA */}
-        <div className="flex-1 relative flex flex-col overflow-hidden bg-slate-200">
-            
-            {/* PANEL AYAT MATEMATIK PINTAR (Di luar kanvas, tidak akan tertutup) */}
-            <div className="bg-white/95 backdrop-blur border-b border-gray-200 py-4 px-6 flex justify-center z-20 shadow-sm shrink-0">
-                <div className="flex items-center gap-3">
-                    <span className="font-extrabold text-gray-600 text-lg mr-3 uppercase tracking-widest hidden md:inline">Ayat Matematik</span>
-                    
-                    <input type="number" placeholder="12"
-                      className="w-20 h-20 text-center text-4xl font-black text-gray-800 border-4 border-gray-200 rounded-2xl focus:outline-none focus:border-blue-400 focus:bg-blue-50 transition-colors shadow-inner placeholder:text-gray-200" 
-                      value={mathEq.num1} onChange={e => handleMathEqChange('num1', e.target.value)} 
-                    />
-                    
-                    <input type="text" maxLength={1} placeholder="+"
-                      className="w-16 h-20 text-center text-5xl font-black text-gray-800 border-4 border-gray-200 rounded-2xl focus:outline-none focus:border-blue-400 focus:bg-blue-50 transition-colors shadow-inner placeholder:text-gray-200" 
-                      value={mathEq.op} 
-                      onChange={e => {
-                          const val = e.target.value;
-                          if (val === '+' || val === '-' || val === '') handleMathEqChange('op', val);
-                      }} 
-                    />
-                    
-                    <input type="number" placeholder="6"
-                      className="w-20 h-20 text-center text-4xl font-black text-gray-800 border-4 border-gray-200 rounded-2xl focus:outline-none focus:border-blue-400 focus:bg-blue-50 transition-colors shadow-inner placeholder:text-gray-200" 
-                      value={mathEq.num2} onChange={e => handleMathEqChange('num2', e.target.value)} 
-                    />
-                    
-                    <span className="text-5xl font-black text-gray-400 mx-2">=</span>
-                    
-                    <input type="number" placeholder="?"
-                      className={`w-24 h-20 text-center text-4xl font-black border-4 rounded-2xl focus:outline-none transition-all duration-300 shadow-inner placeholder:text-gray-200 ${ansBgClass}`} 
-                      value={mathEq.ans} onChange={e => handleMathEqChange('ans', e.target.value)} 
-                    />
-                </div>
-            </div>
-
-            {/* MEJA KERJA BOLEH SKROL */}
-            <main 
-                ref={workspaceRef}
-                className="flex-1 overflow-auto relative" 
-                id="scroll-area"
-            >
-                <div 
-                    className="w-[3000px] h-[3000px] relative bg-slate-100"
-                    onDragOver={(e) => e.preventDefault()}
-                    onDrop={handleDrop}
-                    style={{
-                        backgroundImage: 'radial-gradient(#CBD5E0 2px, transparent 2px)',
-                        backgroundSize: '40px 40px'
-                    }}
-                >
-                    {/* Panduan Penggunaan Asal apabila meja kosong */}
-                    {elements.bars.length === 0 && elements.units.length === 0 && elements.symbols.length === 0 && (
-                        <div className="absolute top-10 left-10 pointer-events-none bg-white/70 p-6 rounded-2xl border border-dashed border-gray-300 shadow-sm max-w-lg backdrop-blur-sm">
-                            <p className="text-gray-700 font-bold text-xl mb-3 border-b pb-2">Panduan Penggunaan</p>
-                            <ul className="text-gray-600 text-sm space-y-3 list-disc list-inside">
-                              <li>Tarik <b>Bar</b> dan <b>Kepingan Oren</b> dari Stok Alat di kiri ke atas meja.</li>
-                              <li>Lalukan tetikus (hover) pada mana-mana bar di meja untuk melihat butang <b>(+) Isi Penuh</b> atau <b>(-) Kosongkan</b> unit.</li>
-                              <li>Tarik operasi <b>Tolak ➖</b> ke sebelah KANAN bar pertama. Gigi akan masuk tersembunyi.</li>
-                              <li>Tarik <b>Bar Kedua</b> ke sebelah KANAN operasi tolak tadi. Mereka akan bersambung.</li>
-                              <li>Tarik operasi <b>Tambah ➕</b> ke sebelah KANAN bar. Lekuknya akan membalut nombor.</li>
-                            </ul>
-                        </div>
-                    )}
-
-                    {/* Render Indikator Nombor */}
-                    {getVerticalIndicators().map(indicator => (
-                        <div
-                            key={`indicator-${indicator.id}`}
-                            style={{ position: 'absolute', left: indicator.x - 4, top: indicator.y - 45, zIndex: 40 }}
-                            className="bg-blue-600 text-white font-black text-2xl w-14 h-12 rounded-t-xl rounded-bl-md rounded-br-md shadow-lg pointer-events-none flex items-center justify-center border-b-4 border-blue-800"
-                        >
-                            {indicator.totalFilledUnits}
-                        </div>
-                    ))}
-
-                    {/* Render Elemen Bar */}
-                    {elements.bars.map(bar => <BarBase key={`bar-${bar.id}`} {...bar} onDragStart={handleDragStart} onEmpty={handleEmptyBar} onFill={handleFillBar} />)}
-                    
-                    {/* Render Simbol */}
-                    {elements.symbols.map(sym => {
-                        const pos = getSymbolPos(sym, elements.bars);
-                        const isSnapped = sym.attachedBarId !== null;
-                        return sym.type === '+' 
-                            ? <PlusSymbol key={`sym-${sym.id}`} id={sym.id} x={pos.x} y={pos.y} isSnapped={isSnapped} onDragStart={handleDragStart} />
-                            : <MinusSymbol key={`sym-${sym.id}`} id={sym.id} x={pos.x} y={pos.y} isSnapped={isSnapped} onDragStart={handleDragStart} />;
-                    })}
-
-                    {/* Render Kepingan Unit Oren */}
-                    {elements.units.map(unit => {
-                        const pos = getUnitPos(unit, elements.bars);
-                        return <UnitPiece key={`unit-${unit.id}`} id={unit.id} x={pos.x} y={pos.y} onDragStart={handleDragStart} />;
-                    })}
-                </div>
-            </main>
-            
-            {/* Tong Sampah (Fixed position on right) */}
-            <div 
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={handleTrashDrop}
-                className="absolute bottom-16 right-8 w-48 h-32 bg-red-50 border-4 border-red-300 border-dashed rounded-2xl flex flex-col items-center justify-center text-red-500 z-50 shadow-lg hover:bg-red-200 transition-colors cursor-pointer"
-                title="Lepaskan elemen di sini untuk membuang"
-            >
-                <span className="text-3xl mb-1 pointer-events-none">🗑️</span>
-                <span className="font-bold text-xs tracking-wide uppercase pointer-events-none">Kawasan Buang</span>
-            </div>
-
-            {/* WATERMARK & KREDIT BAWAH (Kekal / Fixed) */}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-50 pointer-events-none">
-                <p className="bg-white/80 backdrop-blur-md px-6 py-2 rounded-full text-xs font-bold text-gray-500 tracking-wider shadow-sm border border-gray-200">
-                    DIJANA OLEH AI. HAK MILIK DAN IDEA ASAL MEKATOON.
-                </p>
-            </div>
-            
-        </div>
-      </div>
-    </div>
-  );
-}
+        // --- RENDER APP KE DALAM HTML ---
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
